@@ -1,7 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import HealthCare from "./HealthCare";
-import web3 from "./web3";
+
+import getWeb3 from "./getWeb3";
+import HealthCare from "./contracts/HealthCare.json";
+import web3 from "web3";
 
 export default class Hadmin extends React.Component {
   constructor(props) {
@@ -9,17 +11,50 @@ export default class Hadmin extends React.Component {
     this.handleClick = this.handleClick.bind(this);
     this.state = {
       recID: "",
-      message: ""
+      message: "",
+      records: [],
+      web3: null,
+      accounts: null,
+      contract: null,
     };
+  }
+
+  async componentDidMount() {
+    const web3 = await getWeb3();
+    this.setState({ accounts: await web3.eth.getAccounts() });
+    const networkId = await web3.eth.net.getId();
+    const deployedNetwork = HealthCare.networks[networkId];
+    const instance = new web3.eth.Contract(
+      HealthCare.abi,
+      deployedNetwork && deployedNetwork.address
+    );
+    this.setState({ web3, contract: instance });
+    // console.log(await instance.methods.returnLength().call());
+    // console.log(await instance.methods.getRecords().call());
+    const allRecords = await instance.methods.getRecords().call();
+    const temp = [];
+    for (let i = 0; i < allRecords[0].length; i++) {
+      temp.push([
+        allRecords[0][i],
+        allRecords[1][i],
+        allRecords[2][i],
+        allRecords[3][i],
+        allRecords[4][i],
+      ]);
+    }
+    this.setState({ records: temp });
   }
 
   async handleClick(event) {
     event.preventDefault();
-    const accounts = await web3.eth.getAccounts();
-    await HealthCare.methods
+    await this.state.contract.methods
       .signRecord(this.state.recID)
-      .send({ from: accounts[0], gas: 2100000 });
+      .send({ from: this.state.accounts[0], gas: 2100000 });
     this.setState({ message: "Record approved!" });
+    alert("Record approved!");
+    if (window) {
+      window.location.reload();
+    }
   }
 
   render() {
@@ -33,7 +68,9 @@ export default class Hadmin extends React.Component {
               <input
                 type="number"
                 value={this.state.recID}
-                onChange={event => this.setState({ recID: event.target.value })}
+                onChange={(event) =>
+                  this.setState({ recID: event.target.value })
+                }
                 className="form-control"
                 placeholder="ID"
               />
@@ -66,6 +103,18 @@ export default class Hadmin extends React.Component {
                   <th>Sign Count</th>
                 </tr>
               </thead>
+              <tbody>
+                {this.state.records.map((record) => (
+                  <tr>
+                    <td>{record[0]}</td>
+                    <td>{record[1]}</td>
+                    <td>{record[2]}</td>
+                    <td>{record[3]}</td>
+                    <td>{record[4]}</td>
+                    <td>{record[5]}</td>
+                  </tr>
+                ))}
+              </tbody>
             </table>
           </div>
         </div>

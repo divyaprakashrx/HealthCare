@@ -10,8 +10,10 @@ import './index.css'
 const FullApp = () => (
   <Router>
     <div>
-    <header className="App-header">
+      <header className="App-header">
+        <Link to="/">
           <h1 className="App-title text-center">HealthCare Insurance</h1>
+        </Link>
         </header>
       <Route exact path="/" component={App} />
       <Route path="/patient" component={Patient} />

@@ -12,7 +12,7 @@ export default class Patient extends React.Component {
     super(props);
     this.handleClick = this.handleClick.bind(this);
     this.state = {
-      records: {},
+      records: [],
       recID: "",
       pname: "",
       dDate: "",
@@ -37,7 +37,18 @@ export default class Patient extends React.Component {
     this.setState({ web3, contract: instance });
     // console.log(await instance.methods.returnLength().call());
     // console.log(await instance.methods.getRecords().call());
-    this.setState({records: await instance.methods.getRecords().call()});
+    const allRecords = await instance.methods.getRecords().call();
+    const temp = [];
+    for (let i = 0; i < allRecords[0].length; i++) {
+      temp.push([
+        allRecords[0][i],
+        allRecords[1][i],
+        allRecords[2][i],
+        allRecords[3][i],
+        allRecords[4][i],
+      ]);
+    }
+    this.setState({ records: temp });
   }
 
   async handleClick(event) {
@@ -54,6 +65,10 @@ export default class Patient extends React.Component {
       )
       .send({ from: this.state.accounts[0], gas: 2100000 });
     this.setState({ message: "Record created" });
+    alert("Record created");
+    if (window) {
+      window.location.reload();
+    }
   }
 
   render() {
@@ -135,7 +150,7 @@ export default class Patient extends React.Component {
             </form>
           </div>
         </div>
-        <h1>{JSON.stringify(this.state.records)}</h1>
+        {/* <h1>{JSON.stringify(this.state.records)}</h1> */}
         <div className="col-md-6 col-md-offset-2">
           <div className="c-list">
             <h2 className="text-center">Records</h2>
@@ -162,7 +177,6 @@ export default class Patient extends React.Component {
                   </tr>
                 ))}
               </tbody>
-              
             </table>
           </div>
         </div>
