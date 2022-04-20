@@ -1,26 +1,50 @@
 import React from "react";
 import ReactDOM from "react-dom";
-import HealthCare from "./HealthCare";
-import web3 from "./web3";
+
+import getWeb3 from "./getWeb3";
+import HealthCare from "./contracts/HealthCare.json";
+import web3 from "web3";
+
+//import transactions
 
 export default class Patient extends React.Component {
   constructor(props) {
     super(props);
     this.handleClick = this.handleClick.bind(this);
     this.state = {
+      records: {},
       recID: "",
       pname: "",
       dDate: "",
       hname: "",
       price: "",
-      message: ""
+      message: "",
+      web3: null,
+      accounts: null,
+      contract: null,
     };
   }
 
+  async componentDidMount() {
+    const web3 = await getWeb3();
+    this.setState({ accounts: await web3.eth.getAccounts() });
+    const networkId = await web3.eth.net.getId();
+    const deployedNetwork = HealthCare.networks[networkId];
+    const instance = new web3.eth.Contract(
+      HealthCare.abi,
+      deployedNetwork && deployedNetwork.address
+    );
+    this.setState({ web3, contract: instance });
+    // console.log(await instance.methods.returnLength().call());
+    // console.log(await instance.methods.getRecords().call());
+    this.setState({records: await instance.methods.getRecords().call()});
+  }
+
   async handleClick(event) {
+    console.log("init function");
     event.preventDefault();
-    const accounts = await web3.eth.getAccounts();
-    await HealthCare.methods
+    console.log("calling addRecord");
+    await this.state.contract.methods
       .newRecord(
         this.state.recID,
         this.state.pname,
@@ -28,7 +52,7 @@ export default class Patient extends React.Component {
         this.state.hname,
         this.state.price
       )
-      .send({ from: accounts[0], gas: 2100000 });
+      .send({ from: this.state.accounts[0], gas: 2100000 });
     this.setState({ message: "Record created" });
   }
 
@@ -43,7 +67,7 @@ export default class Patient extends React.Component {
                 <input
                   type="text"
                   value={this.state.recID}
-                  onChange={event =>
+                  onChange={(event) =>
                     this.setState({ recID: event.target.value })
                   }
                   className="form-control"
@@ -54,7 +78,7 @@ export default class Patient extends React.Component {
                 <input
                   type="text"
                   value={this.state.pname}
-                  onChange={event =>
+                  onChange={(event) =>
                     this.setState({ pname: event.target.value })
                   }
                   className="form-control"
@@ -65,7 +89,7 @@ export default class Patient extends React.Component {
                 <input
                   type="Date"
                   value={this.state.dDate}
-                  onChange={event =>
+                  onChange={(event) =>
                     this.setState({ dDate: event.target.value })
                   }
                   className="form-control"
@@ -76,7 +100,7 @@ export default class Patient extends React.Component {
                 <input
                   type="text"
                   value={this.state.hname}
-                  onChange={event =>
+                  onChange={(event) =>
                     this.setState({ hname: event.target.value })
                   }
                   className="form-control"
@@ -87,7 +111,7 @@ export default class Patient extends React.Component {
                 <input
                   type="text"
                   value={this.state.price}
-                  onChange={event =>
+                  onChange={(event) =>
                     this.setState({ price: event.target.value })
                   }
                   className="form-control"
@@ -111,7 +135,7 @@ export default class Patient extends React.Component {
             </form>
           </div>
         </div>
-
+        <h1>{JSON.stringify(this.state.records)}</h1>
         <div className="col-md-6 col-md-offset-2">
           <div className="c-list">
             <h2 className="text-center">Records</h2>
@@ -126,6 +150,19 @@ export default class Patient extends React.Component {
                   <th>Sign Count</th>
                 </tr>
               </thead>
+              <tbody>
+                {this.state.records.map((record) => (
+                  <tr>
+                    <td>{record[0]}</td>
+                    <td>{record[1]}</td>
+                    <td>{record[2]}</td>
+                    <td>{record[3]}</td>
+                    <td>{record[4]}</td>
+                    <td>{record[5]}</td>
+                  </tr>
+                ))}
+              </tbody>
+              
             </table>
           </div>
         </div>

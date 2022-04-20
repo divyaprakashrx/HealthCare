@@ -1,4 +1,6 @@
-pragma solidity >=0.4.22 <0.6.0;
+pragma solidity >=0.4.22 <0.9.0;
+pragma experimental ABIEncoderV2;
+
 
 contract HealthCare {
 
@@ -24,7 +26,7 @@ contract HealthCare {
 
     constructor() public {
         hospitalAdmin = msg.sender;
-        labAdmin = 0xF6F2F51c07e44efE7BC25E0EC6B332f39d930ac0;     //assigning a hard coded address from ganache                   
+        labAdmin = 0xFb27Fa7BfA59efC40785B3CC2dfed71199a7eB1e;     //assigning a hard coded address from ganache                   
     }
     
     
@@ -36,6 +38,7 @@ contract HealthCare {
     event recordSigned(uint256 ID, string testName, string date, string hospitalName, uint256 price);
     
     // Create new record
+
     function newRecord (uint256 _ID, string memory _tName, string memory _date, string memory hName, uint256 price) public{
         Record storage _newrecord = _records[_ID];
 
@@ -73,4 +76,28 @@ contract HealthCare {
             emit  recordSigned(records.ID, records.testName, records.date, records.hospitalName, records.price);
 
     }
+
+    // Function to get all the [records]
+    function getRecords() public view returns (uint256[] memory, string[] memory, string[] memory, string[] memory, uint256[] memory){
+        uint256[] memory _recordsArr = recordsArr;
+        uint recLength=recordsArr.length;
+        string[] memory _testNames = new string[](recLength);
+        string[] memory _dates = new string[](recLength);
+        string[] memory _hospitals = new string[](recLength);
+        uint256[] memory _prices = new uint256[](recLength);
+
+        for(uint i = 0; i < recordsArr.length; i++){
+            _testNames[i] = _records[_recordsArr[i]].testName;
+            _dates[i] = _records[_recordsArr[i]].date;
+            _hospitals[i] = _records[_recordsArr[i]].hospitalName;
+            _prices[i] = _records[_recordsArr[i]].price;
+        }
+
+        return (_recordsArr, _testNames, _dates, _hospitals, _prices);
+    }
+
+    function returnLength() public view returns (uint){
+        return recordsArr.length +100;
+    }
+
 }
